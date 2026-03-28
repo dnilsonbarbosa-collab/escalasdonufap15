@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+  <!-- ══ PWA: STANDALONE / TELA CHEIA ══ -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NUFAP-15">
+  <meta name="theme-color" content="#1c2220">
+  <link rel="apple-touch-icon" href="icons/icon-512x512.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala NUFAP-15 — PMPB</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ══ PMPB THEME — Cinza/Prata + Vermelho + Preto ══ */
+:root{
+  --s1:#2e3530; --s2:#3d4a42; --s3:#4f5e54;  /* cinza-escuro app bg */
+  --g1:#5a6a60; --g2:#788a80; --g3:#96a89e;  /* cinza médio */
+  --sv:#b0c0b8; --sv2:#ccd8d4; --sv3:#e4ecea; /* prata/claro */
+  --red:#b22222; --red2:#8B1A1A;
+  --blk:#1a1e1c;
+  --blue:#1b4f8a;
+  --purple:#5a2d82;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Segoe UI',Arial,sans-serif;
+  background:linear-gradient(135deg,#1c2220 0%,#252e2a 55%,#1a2220 100%);
+  min-height:100vh;color:var(--sv3);padding:0 0 30px;
+}
+
+/* ── BARRA TOPO: cinza claro | cinza médio | vermelho ── */
+.topbar{display:flex;height:10px;width:100%;}
+.topbar span{flex:1;}
+.tb-1{background:#96a89e;}
+.tb-2{background:#5a6a60;}
+.tb-3{background:#b22222;}
+
+/* ── HEADER APP ── */
+.app-header{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 22px 10px;
+  background:linear-gradient(180deg,rgba(90,106,96,.18),transparent);
+  border-bottom:1px solid rgba(150,168,158,.2);
+}
+.app-header .brasao-wrap{
+  flex-shrink:0;display:flex;align-items:center;
+}
+.app-header img{
+  width:72px;height:72px;object-fit:contain;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.25));
+  animation:pulse 3s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{filter:drop-shadow(0 3px 10px rgba(178,34,34,.4));}
+  50%{filter:drop-shadow(0 4px 22px rgba(178,34,34,.75));}
+}
+.app-header-text,.app-hdr-txt{flex:1;text-align:left;}
+.app-header h1{font-size:1.45rem;font-weight:800;color:var(--sv2);letter-spacing:1px;margin:0 0 2px;}
+.app-header p{color:var(--g3);font-size:.76rem;margin:0;}
+
+/* ── LAYOUT ── */
+.main{max-width:1100px;margin:18px auto;padding:0 14px;
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:760px){.main{grid-template-columns:1fr;}}
+
+/* ── PANEL ── */
+.panel{
+  background:rgba(150,168,158,.07);
+  border:1px solid rgba(150,168,158,.2);
+  border-radius:13px;padding:20px;backdrop-filter:blur(8px);
+}
+.pt{font-size:.78rem;font-weight:700;color:var(--sv2);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;
+  border-left:3px solid var(--g2);padding-left:8px;}
+.div{height:1px;background:linear-gradient(90deg,transparent,var(--g2),transparent);margin:13px 0;}
+
+/* ── INPUTS ── */
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:.7rem;font-weight:600;color:var(--g3);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.fg input,.fg textarea{
+  width:100%;padding:8px 12px;
+  background:rgba(150,168,158,.09);
+  border:1px solid rgba(150,168,158,.25);
+  border-radius:7px;color:var(--sv3);font-size:.88rem;
+  outline:none;transition:all .2s;font-family:inherit;
+}
+.fg input:focus,.fg textarea:focus{
+  border-color:var(--sv);background:rgba(150,168,158,.18);
+  box-shadow:0 0 0 3px rgba(150,168,158,.15);
+}
+.fg textarea{resize:vertical;min-height:75px;line-height:1.5;}
+
+/* ── MILITARES ── */
+.per-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;}
+.per-card{
+  background:rgba(150,168,158,.08);
+  border:1px solid rgba(150,168,158,.18);
+  border-left:3px solid var(--g2);
+  border-radius:8px;padding:9px 11px;
+}
+.per-card label{font-size:.65rem;font-weight:700;color:var(--sv);
+  text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;}
+.per-card .rr{display:flex;gap:5px;}
+.per-card input{width:100%;background:transparent;border:none;
+  border-bottom:1px solid rgba(150,168,158,.3);
+  color:var(--sv3);font-size:.83rem;font-weight:600;
+  padding:3px 0;outline:none;transition:border-color .2s;}
+.per-card .rr input:first-child{width:50px;flex-shrink:0;}
+.per-card .rr input:last-child{flex:1;}
+.per-card input:focus{border-bottom-color:var(--sv2);}
+
+/* ── ESCALA ── */
+.day-obs-row{margin-top:7px;}
+.day-obs-ta{
+  width:100%;background:rgba(90,106,98,.1);
+  border:1px dashed rgba(150,168,158,.4);border-radius:7px;
+  color:var(--sv3);font:inherit;font-size:.78rem;
+  padding:6px 9px;resize:vertical;min-height:42px;
+  transition:border .2s,background .2s;
+}
+.day-obs-ta:focus{outline:none;border-color:var(--g3);background:rgba(90,106,98,.18);}
+.day-obs-ta::placeholder{color:var(--g2);font-style:italic;}
+.day-block{margin-bottom:10px;background:rgba(150,168,158,.05);
+  border:1px solid rgba(150,168,158,.13);border-radius:8px;overflow:hidden;}
+.day-hdr{background:linear-gradient(90deg,#2e3a34,#1e2a24);
+  padding:6px 12px;font-size:.75rem;font-weight:700;
+  letter-spacing:1.5px;color:var(--sv2);text-transform:uppercase;}
+.srow{display:grid;grid-template-columns:76px 1fr auto;gap:8px;padding:8px 10px;
+  border-top:1px solid rgba(150,168,158,.08);align-items:start;}
+.slbl{font-size:.65rem;font-weight:700;text-transform:uppercase;
+  padding:2px 6px;border-radius:20px;text-align:center;}
+.slbl.mn{background:rgba(27,79,138,.4);color:#88c0f0;border:1px solid rgba(136,192,240,.25);}
+.slbl.af{background:rgba(90,106,96,.5);color:var(--sv2);border:1px solid rgba(150,168,158,.3);}
+.ssel{background:rgba(150,168,158,.1);border:1px solid rgba(150,168,158,.22);
+  border-radius:5px;color:var(--sv3);font-size:.78rem;
+  padding:4px 8px;outline:none;cursor:pointer;min-width:140px;width:auto;max-width:200px;
+  field-sizing:content;transition:all .2s;white-space:nowrap;}
+.ssel:focus{border-color:var(--sv);background:rgba(150,168,158,.2);}
+.ssel option{background:#252e2a;color:var(--sv3);}
+
+/* ── NOVO: CONTROLES DE MILITARES POR TURNO ── */
+.shift-mil-container{display:flex;flex-direction:column;gap:6px;align-items:flex-start;}
+.mil-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mil-row .ssel{flex:1;}
+.btn-add-mil,.btn-del-mil{
+  width:22px;height:22px;border:none;border-radius:4px;
+  font-size:14px;font-weight:bold;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;flex-shrink:0;
+}
+.btn-add-mil{background:rgba(27,79,138,.5);color:#88c0f0;}
+.btn-add-mil:hover{background:rgba(27,79,138,.7);}
+.btn-del-mil{background:rgba(178,34,34,.4);color:#ff9090;}
+.btn-del-mil:hover{background:rgba(178,34,34,.6);}
+
+/* ── BOTÕES ── */
+.btn-row{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;}
+.btn{flex:1;min-width:100px;padding:10px 14px;border:none;border-radius:8px;
+  font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn:hover{transform:translateY(-2px);}
+.b-prev{background:linear-gradient(135deg,#3d4a42,#5a6a60);color:#fff;}
+.b-prev:hover{box-shadow:0 5px 18px rgba(90,106,96,.55);}
+.b-pdf{background:linear-gradient(135deg,#5a2d82,#7b3fa8);color:#fff;}
+.b-pdf:hover{box-shadow:0 5px 18px rgba(90,45,130,.5);}
+.b-png{background:linear-gradient(135deg,#8B1A1A,#b22222);color:#fff;}
+.b-png:hover{box-shadow:0 5px 18px rgba(178,34,34,.5);}
+.b-rst{background:rgba(255,255,255,.08);color:var(--sv3);
+  border:1px solid rgba(255,255,255,.18);flex:0 0 auto;min-width:auto;padding:10px 13px;}
+.b-rst:hover{background:rgba(255,255,255,.14);}
+
+/* ── STATUS ── */
+.status{background:rgba(90,106,96,.2);border:1px solid rgba(150,168,158,.3);
+  border-radius:6px;padding:6px 12px;font-size:.78rem;color:var(--sv2);
+  text-align:center;margin-top:9px;display:none;}
+.status.show{display:block;}
+
+/* ── PREVIEW ── */
+.prev-panel{display:flex;flex-direction:column;gap:12px;}
+.prev-box{background:rgba(0,0,0,.25);border:2px dashed rgba(150,168,158,.22);
+  border-radius:13px;overflow:hidden;display:flex;align-items:center;
+  justify-content:center;min-height:260px;}
+.prev-ph{text-align:center;color:rgba(255,255,255,.2);padding:22px;}
+.prev-ph .ic{font-size:2.5rem;display:block;margin-bottom:7px;}
+#cv{max-width:100%;height:auto;display:none;border-radius:9px;}
+.hint{background:rgba(150,168,158,.08);border:1px solid rgba(150,168,158,.2);
+  border-radius:8px;padding:10px 13px;font-size:.77rem;color:var(--g3);
+  text-align:center;line-height:1.5;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:rgba(150,168,158,.3);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="tb-1"></span>
+  <span class="tb-2"></span>
+  <span class="tb-3"></span>
+</div>
+
+<div class="app-header">
+  <div class="brasao-wrap">
+    <img id="hdrBrasao" src="icons/icon-192x192.png" alt="Brasão PMPB"/>
+  </div>
+  <div class="app-hdr-txt">
+    <h1>ESCALA NUFAP-15</h1>
+    <p>Polícia Militar da Paraíba — 15º Batalhão — Gerador de Escala Oficial</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ══ EDITOR ══ -->
+  <div class="panel" style="max-height:92vh;overflow-y:auto;">
+    <div class="pt">🏷️ Cabeçalho</div>
+    <div class="fg"><label>Título</label><input id="iT" value="ESCALA NUFAP-15"></div>
+    <div class="fg"><label>📅 Período</label><input id="iP" value="02/03 a 06/03"></div>
+    <div class="div"></div>
+    <div class="pt">👥 Militares</div>
+    <div class="per-grid" id="PG"></div>
+    <div class="div"></div>
+    <div class="pt">📅 Grade de Turnos</div>
+    <div id="SG"></div>
+    <div class="div"></div>
+    <div class="pt">📢 Observações / Avisos</div>
+    <div class="fg">
+      <label>Informações para o rodapé</label>
+      <textarea id="iO" rows="4">⚠️ Qualquer alteração na escala deverá ser comunicada com antecedência mínima de 24h ao responsável pelo setor.</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn b-prev" onclick="doPreview()">🔍 Prévia</button>
+      <button class="btn b-pdf"  onclick="doPDF()">📄 PDF</button>
+      <button class="btn b-png"  onclick="doPNG()">⬇️ PNG</button>
+      <button class="btn b-rst"  onclick="doReset()">↺</button>
+    </div>
+    <div id="SB" class="status"></div>
+  </div>
+
+  <!-- ══ PRÉVIA ══ -->
+  <div class="prev-panel">
+    <div class="panel" style="padding:0;overflow:hidden;flex:1;">
+      <div class="prev-box">
+        <div class="prev-ph" id="PH">
+          <span class="ic">🖼️</span>
+          <strong>Prévia da Escala</strong>
+          <p style="margin-top:6px;font-size:.78rem;">Clique em <strong>"Prévia"</strong></p>
+        </div>
+        <canvas id="cv"></canvas>
+      </div>
+    </div>
+    <div class="hint">
+      💡 <strong>PNG</strong> — fundo branco, ideal para impressão e WhatsApp.<br>
+      📄 <strong>PDF</strong> — mesmo layout, formato A4 oficial com assinaturas.
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══ DADOS ═══ */
+const DP=[{rank:'CB',name:'JOSELMA'},{rank:'TEN',name:'BARBOSA'},{rank:'SGT',name:'HERISSON'},{rank:'CAP',name:'GABRIEL SILVA'},{rank:'TEN',name:'MARLON'}];
+
+/* NOVO: Estrutura de dados para múltiplos militares por turno
+   Cada dia tem: {manha: [indices], tarde: [indices]}
+   Inicialmente 2 militares por turno como no original */
+const DS_NUOVO = [
+  {manha:[0,1], tarde:[1,2]},
+  {manha:[2,3], tarde:[0,4]},
+  {manha:[2,0], tarde:[4,0]},
+  {manha:[2,3], tarde:[3,1]},
+  {manha:[0,1], tarde:[2,4]}
+];
+
+const DY=[{l:'SEGUNDA-FEIRA',obs:''},{l:'TERÇA-FEIRA',obs:''},{l:'QUARTA-FEIRA',obs:''},{l:'QUINTA-FEIRA',obs:''},{l:'SEXTA-FEIRA',obs:''}];
+
+let P=DP.map(p=>({...p})),
+    /* NOVO: S agora é array de objetos com arrays de militares */
+    S=DS_NUOVO.map(d=>({manha:[...d.manha], tarde:[...d.tarde]}));
+
+function gl(i){return(i>=0&&i<P.length)?`${P[i].rank} ${P[i].name}`:'';}
+
+/* ═══ UI ═══ */
+function buildP(){
+  const g=document.getElementById('PG');g.innerHTML='';
+  P.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='per-card';
+    c.innerHTML=`<label>Militar ${i+1}</label><div class="rr">
+      <input type="text" value="${p.rank}" placeholder="Grad." oninput="P[${i}].rank=this.value;rS()">
+      <input type="text" value="${p.name}" placeholder="Nome"  oninput="P[${i}].name=this.value;rS()">
+    </div>`;
+    g.appendChild(c);
+  });
+}
+
+/* NOVO: Função para criar container de militares de um turno */
+function criarMilContainer(di, turno, baseArray){
+  const container=document.createElement('div');
+  container.className='shift-mil-container';
+  container.id=`container_${di}_${turno}`;
+
+  // Criar rows para cada militar
+  baseArray.forEach((milIndex, idx)=>{
+    const row=criarMilRow(di, turno, idx, milIndex);
+    container.appendChild(row);
+  });
+
+  return container;
+}
+
+/* NOVO: Função para criar uma row de militar */
+function criarMilRow(di, turno, idx, selectedValue){
+  const row=document.createElement('div');
+  row.className='mil-row';
+  row.id=`row_${di}_${turno}_${idx}`;
+
+  // Select do militar
+  const sel=mkS(di, turno, idx, selectedValue);
+
+  // Botão remover (se tiver mais de 1)
+  const btnDel=document.createElement('button');
+  btnDel.className='btn-del-mil';
+  btnDel.innerHTML='−';
+  btnDel.title='Remover militar';
+  btnDel.onclick=function(){removerMilitar(di, turno, idx);};
+
+  // Botão adicionar (se for o último)
+  const btnAdd=document.createElement('button');
+  btnAdd.className='btn-add-mil';
+  btnAdd.innerHTML='+';
+  btnAdd.title='Adicionar militar';
+  btnAdd.onclick=function(){adicionarMilitar(di, turno);};
+
+  row.appendChild(sel);
+  row.appendChild(btnDel);
+  row.appendChild(btnAdd);
+
+  return row;
+}
+
+/* NOVO: Função para criar select de militar */
+function mkS(di, turno, idx, selectedValue){
+  const s=document.createElement('select');
+  s.className='ssel';
+  s.id=`s${di}_${turno}_${idx}`;
+  s.onchange=function(){
+    S[di][turno][idx]=parseInt(this.value);
+  };
+  fS(s, selectedValue);
+  return s;
+}
+
+/* NOVO: Função para preencher options do select */
+function fS(sel, selectedValue){
+  sel.innerHTML='';
+  // opção vazia
+  const emp=document.createElement('option');
+  emp.value=-1;
+  emp.textContent='— Nenhum —';
+  if(selectedValue===-1 || selectedValue===undefined) emp.selected=true;
+  sel.appendChild(emp);
+
+  P.forEach((p,i)=>{
+    const o=document.createElement('option');
+    o.value=i;
+    o.textContent=`${p.rank} ${p.name}`;
+    if(i===selectedValue) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+/* NOVO: Adicionar militar a um turno */
+function adicionarMilitar(di, turno){
+  S[di][turno].push(-1); // Adiciona slot vazio
+  rebuildShiftContainer(di, turno);
+}
+
+/* NOVO: Remover militar de um turno */
+function removerMilitar(di, turno, idx){
+  if(S[di][turno].length<=1){
+    alert('Cada turno deve ter pelo menos 1 militar!');
+    return;
+  }
+  S[di][turno].splice(idx, 1);
+  rebuildShiftContainer(di, turno);
+}
+
+/* NOVO: Reconstruir container de um turno */
+function rebuildShiftContainer(di, turno){
+  const container=document.getElementById(`container_${di}_${turno}`);
+  if(!container) return;
+
+  container.innerHTML='';
+  S[di][turno].forEach((milIndex, idx)=>{
+    const row=criarMilRow(di, turno, idx, milIndex);
+    container.appendChild(row);
+  });
+}
+
+/* MODIFICADO: buildS agora usa a nova estrutura */
+function buildS(){
+  const g=document.getElementById('SG');
+  g.innerHTML='';
+
+  DY.forEach((d,di)=>{
+    const b=document.createElement('div');
+    b.className='day-block';
+    b.innerHTML=`<div class="day-hdr">📅 ${d.l}</div>`;
+
+    // Manhã
+    const rowMn=document.createElement('div');
+    rowMn.className='srow';
+    const lblMn=document.createElement('div');
+    lblMn.className='slbl mn';
+    lblMn.textContent='Manhã';
+    const containerMn=criarMilContainer(di, 'manha', S[di].manha);
+    rowMn.appendChild(lblMn);
+    rowMn.appendChild(containerMn);
+    // Espaço vazio para manter grid
+    const spacer1=document.createElement('div');
+    rowMn.appendChild(spacer1);
+    b.appendChild(rowMn);
+
+    // Tarde
+    const rowAf=document.createElement('div');
+    rowAf.className='srow';
+    const lblAf=document.createElement('div');
+    lblAf.className='slbl af';
+    lblAf.textContent='Tarde';
+    const containerAf=criarMilContainer(di, 'tarde', S[di].tarde);
+    rowAf.appendChild(lblAf);
+    rowAf.appendChild(containerAf);
+    // Espaço vazio para manter grid
+    const spacer2=document.createElement('div');
+    rowAf.appendChild(spacer2);
+    b.appendChild(rowAf);
+
+    // ── Obs. do dia ──
+    const obsWrap=document.createElement('div');
+    obsWrap.className='day-obs-row';
+    const obsTa=document.createElement('textarea');
+    obsTa.className='day-obs-ta';
+    obsTa.placeholder='📝 Observações do dia...';
+    obsTa.rows=2;
+    obsTa.value=DY[di].obs||'';
+    obsTa.oninput=function(){DY[di].obs=this.value;};
+    obsWrap.appendChild(obsTa);
+    b.appendChild(obsWrap);
+
+    g.appendChild(b);
+  });
+}
+
+/* MODIFICADO: rS atualiza todos os selects */
+function rS(){
+  DY.forEach((_,di)=>{
+    ['manha','tarde'].forEach(turno=>{
+      S[di][turno].forEach((val,idx)=>{
+        const s=document.getElementById(`s${di}_${turno}_${idx}`);
+        if(s){
+          const v=parseInt(s.value);
+          fS(s,v);
+          S[di][turno][idx]=v;
+        }
+      });
+    });
+  });
+}
+
+function doReset(){
+  P=DP.map(p=>({...p}));
+  S=DS_NUOVO.map(d=>({manha:[...d.manha], tarde:[...d.tarde]}));
+  DY.forEach(d=>{d.obs='';});
+  document.getElementById('iT').value='ESCALA NUFAP-15';
+  document.getElementById('iP').value='02/03 a 06/03';
+  document.getElementById('iO').value='⚠️ Qualquer alteração na escala deverá ser comunicada com antecedência mínima de 24h ao responsável pelo setor.';
+  buildP();
+  buildS();
+  document.getElementById('cv').style.display='none';
+  document.getElementById('PH').style.display='block';
+  st('');
+}
+
+function st(msg,ok=true){
+  const b=document.getElementById('SB');
+  if(!msg){b.classList.remove('show');return;}
+  b.textContent=msg;
+  b.style.background=ok?'rgba(90,106,96,.2)':'rgba(178,34,34,.2)';
+  b.style.borderColor=ok?'rgba(150,168,158,.35)':'rgba(178,34,34,.4)';
+  b.style.color=ok?'#ccd8d4':'#ff9090';
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),3500);
+}
+
+/* ═══ HELPERS ═══ */
+const BRASAO_B64='icons/icon-180x180.png"Segoe UI",Arial';
+
+
+/* Função para desenhar placeholder do brasão */
+function drawBrasaoPlaceholder(ctx,x,y,w,h){
+  ctx.save();
+  /* Círculo de fundo */
+  ctx.beginPath();
+  ctx.arc(x+w/2,y+h/2,w/2-2,0,Math.PI*2);
+  ctx.fillStyle='#5a6a60';
+  ctx.fill();
+  ctx.strokeStyle='#3d4a44';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  /* Texto 15º BPM */
+  ctx.fillStyle='#fff';
+  ctx.font='bold 14px "Segoe UI",Arial';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('15º',x+w/2,y+h/2-6);
+  ctx.font='10px "Segoe UI",Arial';
+  ctx.fillText('BPM',x+w/2,y+h/2+8);
+  ctx.restore();
+}
+
+/* MODIFICADO: drawCanvas agora renderiza múltiplos militares */
+
+/* ═══ FUNÇÕES AUXILIARES DO CANVAS ═══ */
+function wrapLines(ctx,text,maxW){
+    const words=text.split(' '),lines=[];
+    let cur='';
+    for(const w of words){
+      const test=cur+w+' ';
+      if(ctx.measureText(test).width>maxW&&cur){lines.push(cur.trim());cur=w+' ';}
+      else cur=test;
+    }
+    if(cur)lines.push(cur.trim());
+    return lines;
+  }
+
+function rrect(ctx,x,y,w,h,r,fill,stroke,sw){
+    ctx.beginPath();
+    const ra=Array.isArray(r)?r:[r,r,r,r];
+    ctx.moveTo(x+ra[0],y);
+    ctx.lineTo(x+w-ra[1],y);ctx.quadraticCurveTo(x+w,y,x+w,y+ra[1]);
+    ctx.lineTo(x+w,y+h-ra[2]);ctx.quadraticCurveTo(x+w,y+h,x+w-ra[2],y+h);
+    ctx.lineTo(x+ra[3],y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-ra[3]);
+    ctx.lineTo(x,y+ra[0]);ctx.quadraticCurveTo(x,y,x+ra[0],y);
+    ctx.closePath();
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=sw||1;ctx.stroke();}
+  }
+
+function hline(ctx,x,y,w,color,lw){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w,y);ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.stroke();}
+
+async function drawCanvas(brasaoImg){
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d'),
+        title=document.getElementById('iT').value||'ESCALA NUFAP-15',
+        period=document.getElementById('iP').value||'02/03 a 06/03',
+        obs=document.getElementById('iO').value.trim();
+
+  const W=900;
+const obsLines=obs?wrapLines(ctx,obs,W-86):[];
+  const obsBoxH=obs?50+obsLines.length*21:0;
+  ctx.font='12px "Segoe UI",Arial';
+
+  const dayObs=DY.map(d=>{
+    const t=(d.obs||'').trim();
+    const ls=t?wrapLines(ctx,t,W-90):[];
+    return {txt:t,lines:ls,extraH:t?26+ls.length*18:0};
+  });
+
+  // Calcular altura extra baseada no número de militares por turno
+  let maxExtraH=0;
+  DY.forEach((_,di)=>{
+    const maxMils=Math.max(S[di].manha.length, S[di].tarde.length);
+    const extraTurnoH=(maxMils>2)?(maxMils-2)*20:0;
+    maxExtraH+=extraTurnoH;
+  });
+
+  const extraDayH=dayObs.reduce((s,d)=>s+d.extraH,0);
+  const H=1140+obsBoxH+extraDayH+maxExtraH;
+  cv.width=W;cv.height=H;
+
+  ctx.fillStyle='#efefef';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ffffff';ctx.fillRect(18,0,W-36,H);
+
+  ctx.fillStyle='#a0b0a8';ctx.fillRect(0,0,W/3,11);
+  ctx.fillStyle='#5a6a62';ctx.fillRect(W/3,0,W/3,11);
+  ctx.fillStyle='#b22222';ctx.fillRect(2*W/3,0,W/3,11);
+
+  const hx=22,hy=22,hw=W-44,hh=122;
+  ctx.shadowColor='rgba(0,0,0,0.13)';ctx.shadowBlur=12;ctx.shadowOffsetY=4;
+  rrect(ctx,hx,hy,hw,hh,12,'#fff','#8a9a92',1.5);
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+  rrect(ctx,hx,hy,hw,38,[12,12,0,0],'#3d4a44','none',0);
+
+  ctx.fillStyle='#d0dcd8';ctx.font='bold 11px "Segoe UI",Arial';
+  ctx.textBaseline='middle';ctx.textAlign='left';
+  ctx.fillText('POLÍCIA MILITAR DA PARAÍBA',hx+16,hy+13);
+  ctx.fillStyle='#a0b0ac';ctx.font='9.5px "Segoe UI",Arial';
+  ctx.fillText('15º BATALHÃO DE POLÍCIA MILITAR — PMPB',hx+16,hy+28);
+
+  const BRASAO_W=80, BRASAO_H=80;
+  const BRASAO_X=hx+10;
+  const BRASAO_Y=hy+38+((84-BRASAO_H)/2);
+  if(brasaoImg){
+    ctx.shadowColor='rgba(0,0,0,0.12)';ctx.shadowBlur=6;
+    ctx.drawImage(brasaoImg,BRASAO_X,BRASAO_Y,BRASAO_W,BRASAO_H);
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;
+  }
+
+  const TITLE_X=hx+10+BRASAO_W+14;
+  ctx.fillStyle='#1e2622';ctx.font='bold 30px "Segoe UI",Arial';
+  ctx.textBaseline='middle';ctx.textAlign='left';
+  ctx.fillText(title,TITLE_X,hy+73);
+
+  ctx.fillStyle='#5a6a62';ctx.font='bold 14px "Segoe UI",Arial';
+  ctx.fillText('Período: '+period,TITLE_X,hy+104);
+
+  hline(ctx,hx,hy+hh+14,hw,'#8a9a92',1.8);
+
+  const startY=hy+hh+30;
+  const dayH=126,gapY=10;
+
+  let curY=startY;
+  DY.forEach((d,di)=>{
+    const dx=22,dw=W-44;
+    const dobs=dayObs[di];
+
+    // Calcular altura deste dia baseada no número de militares
+    const maxMils=Math.max(S[di].manha.length, S[di].tarde.length);
+    const baseShiftH=38;
+    const shiftH=baseShiftH+((maxMils>2)?(maxMils-2)*20:0);
+    const thisH=68+(shiftH*2)+dobs.extraH;
+
+    const dy=curY;
+
+    ctx.shadowColor='rgba(0,0,0,0.09)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
+    rrect(ctx,dx,dy,dw,thisH,10,'#fff','#c8d0cc',1);
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+    const dhg=ctx.createLinearGradient(dx,dy,dx+dw,dy);
+    dhg.addColorStop(0,'#3d4a44');dhg.addColorStop(1,'#2a3530');
+    rrect(ctx,dx,dy,dw,34,[10,10,0,0],dhg,'none',0);
+
+    ctx.fillStyle='#d0dcd8';ctx.font='bold 14px "Segoe UI",Arial';
+    ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('📅  '+d.l,dx+14,dy+17);
+
+    // Manhã - agora passa array de militares
+    drawShiftMulti(ctx,dx+10,dy+38,dw-20,shiftH,S[di].manha,'#3d5a78','#dce8f4','Manha ☀️');
+    // Tarde - agora passa array de militares
+    drawShiftMulti(ctx,dx+10,dy+38+shiftH+6,dw-20,shiftH,S[di].tarde,'#5a6a62','#eaeeed','Tarde  🌥️');
+
+    if(dobs.txt){
+      const obsStartY=dy+38+(shiftH*2)+14;
+      ctx.fillStyle='rgba(90,106,98,0.12)';
+      ctx.beginPath();ctx.roundRect(dx+8,obsStartY,dw-16,dobs.extraH-6,6);ctx.fill();
+      ctx.fillStyle='#5a6a62';ctx.font='bold 10px "Segoe UI",Arial';
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('📝 OBS:',dx+16,obsStartY+9);
+      ctx.fillStyle='#2a3530';ctx.font='12px "Segoe UI",Arial';
+      ctx.textBaseline='top';
+      dobs.lines.forEach((l,i)=>ctx.fillText(l,dx+16,obsStartY+17+i*18));
+    }
+
+    curY+=thisH+gapY;
+  });
+
+  const obsY=startY+curY-startY+14;
+  if(obs){
+    ctx.shadowColor='rgba(0,0,0,0.07)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+    rrect(ctx,22,obsY,W-44,obsBoxH,10,'#f5f6f5','#8a9a92',1.5);
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+    ctx.fillStyle='#3d4a44';ctx.font='bold 13px "Segoe UI",Arial';
+    ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('⚠️  OBSERVAÇÕES / AVISOS',36,obsY+17);
+
+    hline(ctx,36,obsY+27,W-72,'#8a9a92',1);
+
+    ctx.fillStyle='#2a3530';ctx.font='13px "Segoe UI",Arial';
+    ctx.textBaseline='top';
+    obsLines.forEach((l,i)=>ctx.fillText(l,36,obsY+34+i*21));
+  }
+
+  const footY=H-38;
+  hline(ctx,22,footY,W-44,'#8a9a92',1.5);
+  ctx.fillStyle='#8a9a92';ctx.font='10px "Segoe UI",Arial';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('Polícia Militar da Paraíba — Sistema de Escala NUFAP · '+new Date().toLocaleDateString('pt-BR'),W/2,footY+14);
+
+  ctx.fillStyle='#a0b0a8';ctx.fillRect(0,H-9,W/3,9);
+  ctx.fillStyle='#5a6a62';ctx.fillRect(W/3,H-9,W/3,9);
+  ctx.fillStyle='#b22222';ctx.fillRect(2*W/3,H-9,W/3,9);
+
+  return cv;
+
+  return cv;
+}
+
+/* NOVO: Função para desenhar turno com múltiplos militares */
+function drawShiftMulti(ctx,x,y,w,h,milIndices,accent,bgFill,label){
+  // Fundo do turno
+  rrect(ctx,x,y,w,h,7,bgFill,'#c0cac6',0.7);
+
+  // Pílula label
+  rrect(ctx,x+5,y+7,88,20,10,accent,'none',0);
+  ctx.fillStyle='#fff';ctx.font='bold 10px "Segoe UI",Arial';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x+49,y+17);
+
+  // Desenhar militares - distribuídos horizontalmente
+  const milsValidos=milIndices.filter(i=>i>=0&&i<P.length).map(i=>gl(i));
+
+  if(milsValidos.length>0){
+    ctx.fillStyle='#1e2622';ctx.font='bold 12px "Segoe UI",Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+
+    const startX=x+98;
+    const availW=w-98-10;
+    const colW=availW/Math.max(milsValidos.length,1);
+
+    milsValidos.forEach((nome,i)=>{
+      const cx=startX+(colW*i)+(colW/2);
+      ctx.fillText(nome,cx,y+h/2);
+    });
+  }
+}
+
+/* LEGADO: Mantido para compatibilidade se necessário */
+function drawShift(ctx,x,y,w,h,p1,p2,accent,bgFill,label){
+  drawShiftMulti(ctx,x,y,w,h,[p1,p2],accent,bgFill,label);
+}
+
+/* ═══ PDF — renderiza canvas no A4 ═══ */
+async function doPDF(){
+  if(!window.jspdf){st('❌ jsPDF não carregado.',false);return;}
+  st('Gerando PDF...',true);
+  try{
+    const {jsPDF}=window.jspdf;
+    const brasaoImg=await getBrasao();
+    const cv=await drawCanvas(brasaoImg);
+    const imgData=cv.toDataURL('image/png');
+    const SC=210/900;
+    const pdfW=210,pdfH=Math.round(cv.height*SC);
+
+    const doc=new jsPDF({
+      orientation:pdfH>pdfW?'portrait':'landscape',
+      unit:'mm',format:[pdfW,pdfH]
+    });
+    doc.addImage(imgData,'PNG',0,0,pdfW,pdfH);
+
+    const sigY=pdfH-26;
+    doc.setDrawColor(138,154,146);doc.setLineWidth(0.5);
+    doc.line(10,sigY,pdfW-10,sigY);
+
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(110,120,115);
+    doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} — PMPB / Sistema de Escala NUFAP`,pdfW/2,sigY+5,{align:'center'});
+
+    doc.setDrawColor(80,90,85);doc.setLineWidth(0.4);
+    doc.line(14,sigY+16,82,sigY+16);
+    doc.line(pdfW-82,sigY+16,pdfW-14,sigY+16);
+
+    doc.setFontSize(7);doc.setTextColor(50,60,55);
+    doc.text('Responsável pela Escala',14,sigY+20);
+    doc.text('Ciente',pdfW-82,sigY+20);
+
+    const fname=(document.getElementById('iT').value||'Escala_NUFAP').replace(/\s+/g,'_');
+    doc.save(fname+'_PMPB.pdf');
+    st('✅ PDF baixado!',true);
+  }catch(e){console.error(e);st('❌ Erro: '+e.message,false);}
+}
+
+/* ═══ AÇÕES ═══ */
+async function getBrasao(){
+  return new Promise((resolve)=>{
+    const img=new Image();
+    // Tentar carregar sem crossOrigin primeiro (para arquivos locais)
+    img.onload=()=>resolve(img);
+    img.onerror=()=>{
+      // Se falhar, tentar com crossOrigin
+      const img2=new Image();
+      img2.crossOrigin='anonymous';
+      img2.onload=()=>resolve(img2);
+      img2.onerror=()=>resolve(null);
+      img2.src='icons/icon-180x180.png';
+    };
+    img.src='icons/icon-180x180.png';
+  });
+}
+
+async function doPreview(){
+  st('Gerando...',true);
+  try{
+    const img=await getBrasao();
+    const cv=await drawCanvas(img);
+    cv.style.display='block';
+    document.getElementById('PH').style.display='none';
+    st('✅ Prévia gerada!',true);
+  }catch(e){
+    console.error('Erro na prévia:',e);
+    st('❌ Erro: '+e.message,false);
+  }
+}
+
+async function doPNG(){
+  st('Gerando PNG...',true);
+  try{
+    const img=await getBrasao();
+    const cv=await drawCanvas(img);
+    cv.style.display='block';
+    document.getElementById('PH').style.display='none';
+    const a=document.createElement('a');
+    a.download=(document.getElementById('iT').value||'Escala_NUFAP').replace(/\s+/g,'_')+'_PMPB.png';
+    a.href=cv.toDataURL('image/png');a.click();
+    st('✅ PNG baixado!',true);
+  }catch(e){
+    console.error('Erro ao gerar PNG:',e);
+    st('❌ Erro: '+e.message,false);
+  }
+}
+
+buildP();buildS();getBrasao();
+</script>
+</body>
+</html>
